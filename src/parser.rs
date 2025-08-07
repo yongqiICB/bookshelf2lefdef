@@ -1,4 +1,4 @@
-use crate::{aux::Aux, nets::Nets, nodes::Nodes, pl::Pls, scl::Scl};
+use crate::{aux::Aux, nets::Nets, nodes::Nodes, pl::Pls, route::Route, scl::Scl};
 
 #[derive(Default)]
 pub struct Bookshelf {
@@ -7,6 +7,7 @@ pub struct Bookshelf {
     pub nets: Nets,
     pub pls: Pls,
     pub scl: Scl,
+    pub route: Route,
 }
 
 impl Bookshelf {
@@ -29,6 +30,16 @@ impl Bookshelf {
         if let Some(scl_path) = aux.scl.as_ref() {
             res.scl = Scl::read_from_file(scl_path).await?;
             println!("Read {} rows", res.scl.len());
+        }
+
+        if let Some(route_path) = aux.route.as_ref() {
+            res.route = Route::read(route_path).await?;
+            println!("Read Route\
+                \n  {} Not in Image Terminals (akin metals on layer higher than M1. Like VSS in real design).\
+                \n  {} Routing Blockage(routing blockage in different metal, which is saved in `res.route.blockage_info`)",
+                res.route.ni_terminal_len(),
+                res.route.blockge_len(),
+            );
         }
 
 
