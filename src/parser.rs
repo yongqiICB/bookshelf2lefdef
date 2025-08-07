@@ -1,11 +1,12 @@
-use crate::{aux::Aux, nets::Nets, nodes::Nodes, pl::Pls};
+use crate::{aux::Aux, nets::Nets, nodes::Nodes, pl::Pls, scl::Scl};
 
 #[derive(Default)]
 pub struct Bookshelf {
-    aux: Aux,
-    nodes: Nodes,
-    nets: Nets,
-    pls: Pls
+    pub aux: Aux,
+    pub nodes: Nodes,
+    pub nets: Nets,
+    pub pls: Pls,
+    pub scl: Scl,
 }
 
 impl Bookshelf {
@@ -25,7 +26,12 @@ impl Bookshelf {
             println!("Read {} pls", res.pls.len());
         }
 
-        
+        if let Some(scl_path) = aux.scl.as_ref() {
+            res.scl = Scl::read_from_file(scl_path).await?;
+            println!("Read {} rows", res.scl.len());
+        }
+
+
         Ok(res)
     }
 }

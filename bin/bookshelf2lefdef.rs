@@ -1,9 +1,7 @@
-use std::{fs::File, path::PathBuf, time::Instant};
+use std::{path::PathBuf, time::Instant};
 
 use bookshelf2lefdef::{
     aux::Aux,
-    io::reader::TokenReader,
-    nodes::{Node, Nodes},
     parser,
 };
 use clap::Parser;

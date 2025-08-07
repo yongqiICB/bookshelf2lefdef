@@ -1,9 +1,6 @@
-use std::{fs::File, io::BufReader, path::PathBuf};
+use std::path::PathBuf;
 
-use crate::{
-    geom::Point,
-    io::reader::{self, TokenReader},
-};
+use crate::{geom::Point, io::reader};
 
 #[derive(Default)]
 pub struct Nodes {

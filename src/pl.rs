@@ -1,48 +1,51 @@
-use core::panic;
-use std::{default, fs::File, io::BufReader, path::PathBuf};
-
-use bytes::buf::Reader;
-
 use crate::{geom::Point, io::reader::TokenReader};
+use std::{fs::File, io::BufReader, path::PathBuf};
 
 pub struct Pl {
     pub name: String,
     pub place: Point,
     pub orientation: String,
-    pub fixed: bool,
+    pub r#type: Type,
 }
 
+#[derive(Default)]
+pub enum Type {
+    #[default]
+    Movable,
+    Fixed,
+    FixedNotInImage,
+}
 impl Pl {
     pub async fn read(reader: &mut TokenReader<BufReader<File>>) -> anyhow::Result<Self> {
         let name = reader.next_token()?.unwrap().to_string();
         let place = Point::read(reader).await?;
         assert_eq!(":", reader.next_token()?.unwrap());
         let orientation = reader.next_token()?.unwrap().to_string();
-        let fixed = if let Some(next_token) = reader.peek_token()? {
+        let r#type = if let Some(next_token) = reader.peek_token()? {
             if next_token.to_ascii_uppercase().as_bytes() == b"/FIXED" {
                 reader.next_token()?;
-                true
-            } else if next_token.to_ascii_uppercase().as_bytes() == b"/FIXED_NI"{
+                Type::Fixed
+            } else if next_token.to_ascii_uppercase().as_bytes() == b"/FIXED_NI" {
                 reader.next_token()?;
-                true
+                Type::FixedNotInImage
             } else {
-                false
+                Type::Movable
             }
         } else {
-            false
+            Type::Movable
         };
         Ok(Pl {
             name,
             place,
             orientation,
-            fixed,
+            r#type,
         })
     }
 }
 
 #[derive(Default)]
 pub struct Pls {
-    pls: Vec<Pl>
+    pls: Vec<Pl>,
 }
 
 impl Pls {

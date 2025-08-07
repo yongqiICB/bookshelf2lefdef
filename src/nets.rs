@@ -62,7 +62,7 @@ impl Nets {
         while let Some(token) = reader.peek_token()? {
             match token.to_ascii_uppercase().as_bytes() {
                 b"UCLA" | b"#" | b"NUMNETS" | b"NUMPINS" => {
-                    reader.swallow_line();
+                    reader.swallow_line()?;
                 }
                 b"NETDEGREE" => {
                     let net = Net::read(&mut reader).await?;
