@@ -1,19 +1,24 @@
-use std::{fs::File, io::BufReader};
+use std::{fs::File, io::BufReader, path::PathBuf};
 
-use crate::{geom::Point, io::reader::TokenReader};
+use crate::{
+    geom::Point,
+    io::reader::{self, TokenReader},
+};
 
+#[derive(Default)]
 pub struct Nodes {
     pub nodes: Vec<Node>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub enum Movable {
+    #[default]
     Movable,
     Fixed,
     FixedButOverlapAllowed,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Node {
     pub name: String,
     pub size: Point,
@@ -21,33 +26,38 @@ pub struct Node {
 }
 
 impl Nodes {
-    pub async fn read(reader: &mut TokenReader<BufReader<File>>) -> anyhow::Result<Self> {
-        let mut ret = Self {
-            nodes: vec![],
-        };
+    pub fn len(&self) -> usize {
+        self.nodes.len()
+    }
+    pub async fn read(path: &PathBuf) -> anyhow::Result<Self> {
+        let mut reader = reader::TokenReader::new_from_path(path);
+        let mut ret = Self { nodes: vec![] };
         while let Some(token) = reader.next_token()? {
             match token.as_bytes() {
                 b"#" | b"UCLA" | b"NumNodes" | b"NumTerminals" => {
                     let _ = reader.swallow_line();
-                },
+                }
                 b"terminal" => {
-                    ret.nodes.last_mut()
-                        .unwrap()
-                        .moveable = Movable::Fixed;
+                    ret.nodes.last_mut().unwrap().moveable = Movable::Fixed;
                 }
                 b"terminal_NI" => {
                     ret.nodes.last_mut().unwrap().moveable = Movable::FixedButOverlapAllowed;
                 }
                 _ => {
                     let name = token.to_string();
-                    let x = reader.next_token()?.map(|x| str::parse::<i64>(x)).unwrap().unwrap();
-                    let y = reader.next_token()?.map(|y| str::parse::<i64>(y)).unwrap().unwrap();
+                    let x = reader
+                        .next_token()?
+                        .map(|x| str::parse::<i64>(x))
+                        .unwrap()
+                        .unwrap() as f64;
+                    let y = reader
+                        .next_token()?
+                        .map(|y| str::parse::<i64>(y))
+                        .unwrap()
+                        .unwrap() as f64;
                     let next_node = Node {
                         name: name,
-                        size: Point {
-                            x,
-                            y,
-                        },
+                        size: Point { x, y },
                         moveable: Movable::Movable,
                     };
                     ret.nodes.push(next_node);

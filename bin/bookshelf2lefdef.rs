@@ -1,6 +1,11 @@
 use std::{fs::File, path::PathBuf, time::Instant};
 
-use bookshelf2lefdef::{io::reader::TokenReader, nodes::{Node, Nodes}};
+use bookshelf2lefdef::{
+    aux::Aux,
+    io::reader::TokenReader,
+    nodes::{Node, Nodes},
+    parser,
+};
 use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -9,15 +14,13 @@ struct Args {
     input: String,
 }
 
-
 #[tokio::main]
 pub async fn main() {
     let start = Instant::now();
     let args = Args::parse();
     let aux_path = PathBuf::from(args.input);
-    let mut reader = TokenReader::new(std::io::BufReader::new(File::open(aux_path).unwrap()));
-    let res = Nodes::read(&mut reader).await.unwrap();
+    let aux = Aux::build(aux_path).await.unwrap();
+    let _ = parser::Bookshelf::build_from_aux(aux).await.unwrap();
     let end = Instant::now();
-    println!("read {} nodes", res.nodes.len());
-    println!("time: {}", (end-start).as_nanos());
+    println!("time: {} ms", (end - start).as_millis());
 }

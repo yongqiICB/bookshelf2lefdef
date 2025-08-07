@@ -1,10 +1,20 @@
-use std::io::{self, BufRead, BufReader, Read};
+use std::{
+    fs::File,
+    io::{self, BufRead, BufReader, Read},
+    path::PathBuf,
+};
 
 pub struct TokenReader<R: Read> {
     source: BufReader<R>,
     buffer: Vec<u8>,
     current_pos: usize,
     total_bytes_read: usize,
+}
+
+impl TokenReader<BufReader<File>> {
+    pub fn new_from_path(file_path: &PathBuf) -> Self {
+        TokenReader::new(std::io::BufReader::new(File::open(file_path.clone()).unwrap()))
+    }
 }
 
 impl<R: Read> TokenReader<R> {
@@ -27,7 +37,9 @@ impl<R: Read> TokenReader<R> {
 
     pub fn peek_token(&mut self) -> io::Result<Option<&str>> {
         loop {
-            while self.current_pos < self.buffer.len() && self.buffer[self.current_pos].is_ascii_whitespace() {
+            while self.current_pos < self.buffer.len()
+                && self.buffer[self.current_pos].is_ascii_whitespace()
+            {
                 self.current_pos += 1;
             }
             if self.current_pos < self.buffer.len() {
@@ -39,18 +51,20 @@ impl<R: Read> TokenReader<R> {
                 let token_slice = &self.buffer[start..end];
                 let token_str = std::str::from_utf8(token_slice)
                     .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-                return Ok(Some(token_str))
+                return Ok(Some(token_str));
             }
             let bytes_read = self.swallow_line()?;
             if bytes_read == 0 {
-                return Ok(None)
+                return Ok(None);
             }
         }
     }
 
     pub fn next_token(&mut self) -> io::Result<Option<&str>> {
         loop {
-            while self.current_pos < self.buffer.len() && self.buffer[self.current_pos].is_ascii_whitespace() {
+            while self.current_pos < self.buffer.len()
+                && self.buffer[self.current_pos].is_ascii_whitespace()
+            {
                 self.current_pos += 1;
             }
 
@@ -67,7 +81,7 @@ impl<R: Read> TokenReader<R> {
                 self.current_pos = end;
                 return Ok(Some(token_str));
             }
-            let bytes_read = self.swallow_line()?;            
+            let bytes_read = self.swallow_line()?;
             if bytes_read == 0 {
                 return Ok(None);
             }
