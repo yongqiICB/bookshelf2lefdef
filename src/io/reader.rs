@@ -63,6 +63,11 @@ impl<R: Read> TokenReader<R> {
         }
     }
 
+    pub fn expect(&mut self, next_token: &str) -> anyhow::Result<()> {
+        assert_eq!(next_token, self.next_token()?.unwrap());
+        Ok(())
+    }
+
     pub fn next_token(&mut self) -> io::Result<Option<&str>> {
         loop {
             while self.current_pos < self.buffer.len()

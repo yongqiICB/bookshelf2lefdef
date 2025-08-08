@@ -1,4 +1,4 @@
-use crate::{aux::Aux, nets::Nets, nodes::Nodes, pl::Pls, route::Route, scl::Scl};
+use crate::{aux::Aux, nets::Nets, nodes::Nodes, pl::Pls, route::Route, scl::Scl, shape::Shapes};
 
 #[derive(Default)]
 pub struct Bookshelf {
@@ -8,6 +8,7 @@ pub struct Bookshelf {
     pub pls: Pls,
     pub scl: Scl,
     pub route: Route,
+    pub shape: Shapes,
 }
 
 impl Bookshelf {
@@ -42,7 +43,14 @@ impl Bookshelf {
             );
         }
 
+        if let Some(shape_path) = aux.shapes.as_ref() {
+            res.shape = Shapes::read_from_file(shape_path).await?;
+            println!("Read {} shape.", res.shape.len());
+        }
 
+        if let Some(_) = aux.wts.as_ref() {
+            println!("Unimplemented wts!");
+        }
         Ok(res)
     }
 }
