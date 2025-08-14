@@ -1,4 +1,6 @@
-use crate::{aux::Aux, nets::Nets, nodes::Nodes, pl::Pls, route::Route, scl::Scl, shape::Shapes};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
+
+use crate::{aux::Aux, nets::{Net, Nets, Pin}, nodes::Nodes, pl::Pls, route::Route, scl::Scl, shape::Shapes};
 
 #[derive(Default)]
 pub struct Bookshelf {
@@ -52,5 +54,47 @@ impl Bookshelf {
             println!("Unimplemented wts!");
         }
         Ok(res)
+    }
+
+    pub async fn parse(&self) {
+        println!("Start parsing ...");
+        let mut instances = BTreeMap::new();
+        let mut pins = BTreeMap::new();
+        let mut sizes: BTreeSet<(i64, i64)> = BTreeSet::new();
+        self.nodes.nodes.iter().for_each(|node| {
+            match node.moveable {
+                crate::nodes::Movable::Movable | crate::nodes::Movable::Fixed => {
+                    instances.insert(node.name.clone(), node.size);
+                    assert_eq!(0f64, node.size.x.floor() - node.size.x, "node.size.x is not integer {}", node.size.x);
+                    assert_eq!(0f64, node.size.y.floor() - node.size.y, "node.size.y is not integer {}", node.size.y);
+                    sizes.insert((node.size.x as i64, node.size.y as i64));
+                },
+                crate::nodes::Movable::FixedButOverlapAllowed => {
+                    pins.insert(node.name.clone(), node.size);
+                    assert_eq!(0f64, node.size.x.floor() - node.size.x, "node.size.x is not integer {}", node.size.x);
+                    assert_eq!(0f64, node.size.y.floor() - node.size.y, "node.size.y is not integer {}", node.size.y);
+                    sizes.insert((node.size.x as i64, node.size.y as i64));
+                },
+            }
+        });
+        println!(
+            "Splited Nodes into Components and Pins\
+            \n  Pins: {}\
+            \n  Instances: {}\
+            \n  Number of different sizes: {}.",
+            pins.len(), instances.len(), sizes.len()
+        );
+        let macros = crate::lefdef::writer::Macros::build_macro(self).await.unwrap();
+        let net: BTreeMap<String, Net> = self.nets.iter().map(|net| {
+            (net.name.clone(), net.clone())
+        }).collect();
+        let mut net_in_instances = BTreeMap::new();
+        self.nets.iter().for_each(|net| {
+            net.pin.iter().for_each(|pin| {
+                net_in_instances
+                    .entry(pin.instance_name.clone())
+                    .or_insert(vec![]).push(net.name.clone());
+            }); 
+        });
     }
 }

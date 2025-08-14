@@ -69,17 +69,17 @@ impl BlockageInfoReader for BlockageInfo {
 
 #[derive(Default)]
 pub struct Route {
-    grid: Grid,
-    vertical_capacity: Vec<i64>,
-    horizontal_capacity: Vec<i64>,
-    min_wire_width: Vec<i64>,
-    min_wire_spacing: Vec<i64>,
-    via_spacing: Vec<i64>,
-    grid_origin: Point,
-    tile_size: Point,
-    blockage_porosity: i64,
-    ni_terminal_to_layer: TerminalLayer, // not in image terminal (fixed pin above M1)
-    blockage_info: BlockageInfo,
+    pub grid: Grid,
+    pub vertical_capacity: Vec<i64>,
+    pub horizontal_capacity: Vec<i64>,
+    pub min_wire_width: Vec<i64>,
+    pub min_wire_spacing: Vec<i64>,
+    pub via_spacing: Vec<i64>,
+    pub grid_origin: Point,
+    pub tile_size: Point,
+    pub blockage_porosity: i64,
+    pub ni_terminal_to_layer: TerminalLayer, // not in image terminal (fixed pin above M1)
+    pub blockage_info: BlockageInfo,
 }
 
 impl Route {

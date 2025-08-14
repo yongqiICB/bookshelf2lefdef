@@ -9,7 +9,10 @@ path = "bin/bookshelf2lefdef.rs"
 
 
 [dependencies]
+ahash = "0.8.12"
 anyhow = "1.0.98"
 bytes = "1.10.1"
 clap = { version = "4.5.42", features = ["derive"] }
+flexi_logger = "0.31.2"
+log = "0.4.27"
 tokio = { version = "1.47.1", features = ["full"] }

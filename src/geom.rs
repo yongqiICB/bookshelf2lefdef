@@ -2,12 +2,11 @@ use std::{fs::File, io::BufReader, ops::AddAssign};
 
 use crate::io::reader::{CommonReader, TokenReader};
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Point {
     pub x: f64,
     pub y: f64,
 }
-
 
 impl AddAssign for Point {
     fn add_assign(&mut self, rhs: Self) {

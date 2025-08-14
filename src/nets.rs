@@ -2,19 +2,19 @@ use std::{fs::File, io::BufReader, path::PathBuf};
 
 use crate::{geom::Point, io::reader::TokenReader};
 
-#[derive(Default)]
+#[derive(Default, Clone, Debug)]
 pub struct Pin {
-    pin_name: String,
-    instance_name: String,
-    offset: Point,
+    pub pin_name: String,
+    pub instance_name: String,
+    pub offset: Point,
 }
-#[derive(Default)]
+#[derive(Default, Clone, Debug)]
 pub struct Net {
-    name: String,
-    pin: Vec<Pin>,
+    pub name: String,
+    pub pin: Vec<Pin>,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, Debug)]
 pub struct Nets {
     nets: Vec<Net>,
 }
@@ -29,6 +29,8 @@ impl Pin {
         Ok(res)
     }
 }
+
+
 impl Net {
     pub async fn read(reader: &mut TokenReader<BufReader<File>>) -> anyhow::Result<Self> {
         let mut res = Self::default();
@@ -55,6 +57,9 @@ impl Net {
 impl Nets {
     pub fn len(&self) -> usize {
         self.nets.len()
+    }
+    pub fn iter(&self) -> std::slice::Iter<'_, Net> {
+        self.nets.iter()
     }
     pub async fn read_from_file(file_path: PathBuf) -> anyhow::Result<Self> {
         let mut res = Nets::default();
