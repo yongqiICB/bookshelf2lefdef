@@ -76,8 +76,18 @@ enum Direction {
     Vertical,
 }
 
+impl std::fmt::Display for Direction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Direction::Horizontal => write!(f, "HORIZONTAL"),
+            Direction::Vertical => write!(f, "VERTICAL"),
+        }
+    }
+}
+
 #[derive(Default)]
-pub struct Layer {
+pub struct RoutingLayer {
+    name: String,
     layer_type: LayerType,
     direction: Direction,
     pitch: f64,
@@ -87,21 +97,46 @@ pub struct Layer {
 }
 
 
-impl Layer {
-    pub async fn build_layer(bookshelf: &Bookshelf) -> anyhow::Result<Vec<Self>> {
+#[derive(Default)]
+pub struct CutLayer;
+impl CutLayer {
+    pub fn format_a_default_one(name: String) -> String {
+        let mut res = String::new();
+        res += &format!("\n\
+            \nLAYER {}\
+            \n  TYPE CUT ;\
+            \n  SPACING 0.05 ;\
+            \n  WIDTH 0.05 ;\
+            \nEND {}",
+            name, name    
+        );
+        res
+    }
+}
+
+#[derive(Default)]
+pub struct OverlapLayer;
+impl OverlapLayer {
+    pub fn format_a_default_one() -> String {
+        let mut res = String::new();
+        res += &format!("\n\
+            \nLAYER OVERLAP\
+            \n  TYPE OVERLAP ;\
+            \n END OVERLAP"
+        );
+        res
+    }
+}
+
+impl RoutingLayer {
+    pub async fn build_routing_layers(bookshelf: &Bookshelf) -> anyhow::Result<Vec<Self>> {
         let mut res = vec![];
         let aux_layer = &bookshelf.route;
         let num_layer = aux_layer.vertical_capacity.len();
-        
-        info!("Layer information: \
-            \n  可布导线在 tile 的中线上",
-        );
         for layer_id in 0..num_layer {
+            let layer_name = format!("metal{}", layer_id+1);
             let vertical_cap = bookshelf.route.vertical_capacity[layer_id];
             let horizontal_cap = bookshelf.route.horizontal_capacity[layer_id];
-            let min_wire_width = bookshelf.route.min_wire_width[layer_id];
-            let min_wire_spacing = bookshelf.route.min_wire_spacing[layer_id];
-            let pitch = min_wire_width + min_wire_spacing;
             let direction = match (vertical_cap > 0, horizontal_cap > 0) {
                 (false, false) => Direction::Horizontal, // M1, usually horizontal.
                 (false, true) => Direction::Horizontal, // horizontal
@@ -110,7 +145,28 @@ impl Layer {
                     panic!("I don't know how to parse a bidirectional lef");
                 }
             };
+            let min_wire_width = bookshelf.route.min_wire_width[layer_id];
+            let min_wire_spacing = bookshelf.route.min_wire_spacing[layer_id];
+            let pitch = min_wire_width + min_wire_spacing;
+            { // LEFDEF does not support partial routing blockage.
+                let cap_restriction = vertical_cap.max(horizontal_cap);
+                let tile_len = match direction {
+                    Direction::Horizontal => bookshelf.route.tile_size.y,
+                    Direction::Vertical => bookshelf.route.tile_size.x,
+                };
+                // we must prove (tile_len / (min_width + spacing)) > cap_restriction.
+                if (cap_restriction as f64) < (tile_len / pitch as f64) {
+                    warn!(
+                        "we OVERLOOK capacity restriction. on layer {}\
+                        \n  this restrication can not be translated into LEFDEF soundly.
+                        \n  if WIDTH and SPACING already satisfied, nothing happens.
+                        \n  otherwise you will see this note.",
+                        layer_id + 1
+                    );
+                }
+            }
             res.push(Self {
+                name: layer_name,
                 offset: pitch as f64 / 2.0,
                 layer_type: LayerType::Routing,
                 direction: direction,
@@ -119,7 +175,27 @@ impl Layer {
                 spacing: min_wire_spacing as f64,
             })
         }
-        
         Ok(res)
+    }
+    pub async fn format(&self) -> String {
+        let mut res = String::new();
+        res += &format!(
+            "\nLAYER {}\
+            \n  TYPE ROUTING ;\
+            \n  DIRECTION {} ;\
+            \n  WIDTH {} ;\
+            \n  SPACING {} ;\
+            \n  PITCH {} ;\
+            \n  OFFSET {} ;\
+            \nEND {}",
+            self.name,
+            self.direction,
+            self.width,
+            self.spacing,
+            self.pitch,
+            self.offset,
+            self.name,
+        );
+        res
     }
 }
