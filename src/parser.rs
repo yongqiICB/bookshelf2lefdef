@@ -84,10 +84,6 @@ impl Bookshelf {
             \n  Number of different sizes: {}.",
             pins.len(), instances.len(), sizes.len()
         );
-        let macros = crate::lefdef::writer::Macros::build_macro(self).await.unwrap();
-        let net: BTreeMap<String, Net> = self.nets.iter().map(|net| {
-            (net.name.clone(), net.clone())
-        }).collect();
         let mut net_in_instances = BTreeMap::new();
         self.nets.iter().for_each(|net| {
             net.pin.iter().for_each(|pin| {

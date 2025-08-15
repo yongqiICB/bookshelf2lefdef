@@ -1,9 +1,10 @@
 use std::{path::PathBuf, time::Instant};
 
 use bookshelf2lefdef::{
-    aux::Aux, io::logger::init_logger, parser
+    aux::Aux, io::logger::init_logger, lefdef, parser
 };
 use clap::Parser;
+use log::info;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
@@ -24,6 +25,13 @@ pub async fn main() {
     let _ = bookshelf.parse().await;
     end = Instant::now();
     println!("milestone, finished parsing. time: {} ms", (end - start).as_millis());
-    
-    
+    let techlef = lefdef::techlef::TechLef::build(&bookshelf).await.unwrap();
+    techlef.write().await;
+    let lef = lefdef::lef::Lef::build(&bookshelf).await.unwrap();
+    info!("Writing cell lef");
+    lef.write(&PathBuf::from("./1.lef")).await.unwrap();
+    info!("Writing def");
+    let def = lefdef::def::Def::build(&bookshelf);
+    def.write_to_file(&PathBuf::from("./1.def")).unwrap();
+    info!("All finished");
 }

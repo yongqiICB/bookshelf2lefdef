@@ -21,10 +21,59 @@ pub struct Macro {
     pub pins: Vec<Pin>,
 }
 
+impl Macro {
+    pub fn format_to_lef(&self) -> String {
+        let mut res = format!(
+            "\nMACRO {}\
+            \n  CLASS CORE ;\
+            \n  ORIGIN 0 0 ;\
+            \n  SIZE {} {} ;\
+            \n  SYMMETRY X Y ;\
+            \n  SITE coresite ;",
+            self.name,
+            self.size.x,
+            self.size.y,
+        );
+        let center = Point {
+            x: self.size.x / 2.0,
+            y: self.size.y / 2.0,
+        };
+        for (pin_cnt, pin) in self.pins.iter().enumerate() {
+            let direction = match pin.name.as_str() {
+                "I" => "INPUT",
+                "O" => "OUTPUT",
+                _ => panic!("Unable to translate direction"),
+            };
+            res += &format!("\
+                \n  PIN {}_{}\
+                \n      DIRECTION {} ;\
+                \n      USE SIGNAL ; \
+                \n      PORT\
+                \n          LAYER metal1 ; \
+                \n              RECT {} {} {} {} ;\
+                \n      END\
+                \n  END {}_{}",
+                pin.name, pin_cnt,
+                direction,
+                pin.offset.x + center.x - 0.5, pin.offset.y + center.y - 0.5, pin.offset.x + center.x + 0.5, pin.offset.y + center.y + 0.5,
+                pin.name, pin_cnt
+            );
+        }
+        res += &format!("\n END {}", self.name);
+        res
+    }
+}
 #[derive(Debug, Default)]
 pub struct Macros(pub BTreeMap<String, Macro>);
 
 impl Macros {
+    pub fn write_all(&self) -> String {
+        let mut res = String::new();
+        for r#macro in self.0.values() {
+            res += &r#macro.format_to_lef();
+        }
+        res
+    }
     pub async fn build_macro(bookshelf: &Bookshelf) -> anyhow::Result<Self> {
         warn!(
             "Notification for MACRO!!!\
@@ -177,7 +226,7 @@ impl RoutingLayer {
         }
         Ok(res)
     }
-    pub async fn format(&self) -> String {
+    pub fn format(&self) -> String {
         let mut res = String::new();
         res += &format!(
             "\nLAYER {}\

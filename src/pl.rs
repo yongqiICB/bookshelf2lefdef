@@ -49,6 +49,9 @@ pub struct Pls {
 }
 
 impl Pls {
+    pub fn iter(&self) -> std::slice::Iter<'_, Pl> {
+        self.pls.iter()
+    }
     pub fn len(&self) -> usize {
         self.pls.len()
     }

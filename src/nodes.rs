@@ -23,6 +23,9 @@ pub struct Node {
 }
 
 impl Nodes {
+    pub fn iter(&self) -> std::slice::Iter<'_, Node> {
+        self.nodes.iter()
+    }
     pub fn len(&self) -> usize {
         self.nodes.len()
     }
