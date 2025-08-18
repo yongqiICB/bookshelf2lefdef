@@ -2,14 +2,14 @@ use std::path::PathBuf;
 
 use crate::io::reader::CommonReader;
 
-#[derive(Default)]
+#[derive(Default, Clone, Debug)]
 pub enum RowOrientation {
     #[default]
     Horizontal,
     Vertical,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, Debug)]
 pub enum SiteOrient {
     #[default]
     N,
@@ -26,7 +26,7 @@ impl From<&str> for SiteOrient {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone,Debug)]
 pub enum SiteSymmetry {
     X,
     #[default]
@@ -42,17 +42,17 @@ impl From<&str> for SiteSymmetry {
         }
     }
 }
-#[derive(Default)]
+#[derive(Default, Clone, Debug)]
 pub struct Row {
-    coordinate: i64,
-    height: i64,
-    site_width: i64,
-    site_spacing: i64,
-    site_orient: SiteOrient,
-    site_symmetry: SiteSymmetry,
-    subrow_origin: i64,
-    num_sites: i64,
-    orientation: RowOrientation,
+    pub coordinate: i64,
+    pub height: i64,
+    pub site_width: i64,
+    pub site_spacing: i64,
+    pub site_orient: SiteOrient,
+    pub site_symmetry: SiteSymmetry,
+    pub subrow_origin: i64,
+    pub num_sites: i64,
+    pub orientation: RowOrientation,
 }
 
 impl Row {
@@ -119,6 +119,10 @@ pub struct Scl {
 }
 
 impl Scl {
+    pub fn iter(&self) -> std::slice::Iter<'_, Row> {
+        self.rows.iter()
+    }
+
     pub fn len(&self) -> usize {
         self.rows.len()
     }
