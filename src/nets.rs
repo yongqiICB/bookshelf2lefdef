@@ -30,7 +30,6 @@ impl Pin {
     }
 }
 
-
 impl Net {
     pub async fn read(reader: &mut TokenReader<BufReader<File>>) -> anyhow::Result<Self> {
         let mut res = Self::default();

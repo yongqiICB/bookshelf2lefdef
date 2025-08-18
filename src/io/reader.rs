@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-pub type CommonReader = TokenReader<BufReader<File>> ;
+pub type CommonReader = TokenReader<BufReader<File>>;
 pub struct TokenReader<R: Read> {
     source: BufReader<R>,
     buffer: Vec<u8>,

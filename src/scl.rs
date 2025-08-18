@@ -30,7 +30,7 @@ impl From<&str> for SiteOrient {
 pub enum SiteSymmetry {
     X,
     #[default]
-    Y,    
+    Y,
 }
 
 impl From<&str> for SiteSymmetry {
@@ -68,7 +68,7 @@ impl Row {
                 }
                 b"HORIZONTAL" => {
                     res.orientation = RowOrientation::Horizontal;
-                } 
+                }
                 b"VERTICAL" => {
                     res.orientation = RowOrientation::Vertical;
                 }
@@ -115,7 +115,7 @@ impl Row {
 
 #[derive(Default)]
 pub struct Scl {
-    rows: Vec<Row>
+    rows: Vec<Row>,
 }
 
 impl Scl {

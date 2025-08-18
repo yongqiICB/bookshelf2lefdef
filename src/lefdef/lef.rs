@@ -3,7 +3,7 @@ use std::{io::Write, path::PathBuf};
 use crate::{lefdef::writer::Macros, parser::Bookshelf};
 
 pub struct Lef {
-    macros: Macros,
+    pub macros: Macros,
 }
 
 impl Lef {

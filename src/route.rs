@@ -2,7 +2,6 @@ use std::{collections::BTreeMap, path::PathBuf};
 
 use crate::{geom::Point, io::reader::CommonReader, util};
 
-
 #[derive(Default)]
 pub struct Grid {
     num_x: i64,
@@ -22,10 +21,11 @@ impl Grid {
     }
 }
 
-
 type TerminalLayer = BTreeMap<String, i64>;
 pub trait TerminalLayerReader {
-    fn read(reader: &mut CommonReader) ->  impl std::future::Future<Output = anyhow::Result<TerminalLayer>> + Send;
+    fn read(
+        reader: &mut CommonReader,
+    ) -> impl std::future::Future<Output = anyhow::Result<TerminalLayer>> + Send;
 }
 impl TerminalLayerReader for TerminalLayer {
     async fn read(reader: &mut CommonReader) -> anyhow::Result<TerminalLayer> {
@@ -44,11 +44,13 @@ impl TerminalLayerReader for TerminalLayer {
 
 type BlockageInfo = BTreeMap<String, Vec<i64>>;
 pub trait BlockageInfoReader {
-    fn read(reader: &mut CommonReader) -> impl std::future::Future<Output = anyhow::Result<BlockageInfo>> + Send;
+    fn read(
+        reader: &mut CommonReader,
+    ) -> impl std::future::Future<Output = anyhow::Result<BlockageInfo>> + Send;
 }
 
 impl BlockageInfoReader for BlockageInfo {
-    async fn read(reader: &mut CommonReader) ->  anyhow::Result<BlockageInfo> {
+    async fn read(reader: &mut CommonReader) -> anyhow::Result<BlockageInfo> {
         let mut res = BlockageInfo::new();
         assert_eq!("NumBlockageNodes", reader.next_token()?.unwrap());
         assert_eq!(":", reader.next_token()?.unwrap());
@@ -90,9 +92,9 @@ impl Route {
         self.ni_terminal_to_layer.len()
     }
     pub async fn read(route_path: &PathBuf) -> anyhow::Result<Self> {
-        let reader = &mut CommonReader::new_from_path(&route_path);
+        let reader = &mut CommonReader::new_from_path(route_path);
         let mut res = Self::default();
-        while let Some(token) = reader.peek_token()? { 
+        while let Some(token) = reader.peek_token()? {
             match token.to_ascii_uppercase().as_bytes() {
                 b"ROUTE" | b"#" => {
                     reader.swallow_line()?;
@@ -104,35 +106,40 @@ impl Route {
                     reader.next_token()?;
                     assert_eq!(":", reader.next_token()?.unwrap());
                     for _ in 0..res.grid.num_layer {
-                        res.vertical_capacity.push(crate::util::parse(reader.next_token()?.unwrap()));
+                        res.vertical_capacity
+                            .push(crate::util::parse(reader.next_token()?.unwrap()));
                     }
                 }
                 b"HORIZONTALCAPACITY" => {
                     reader.next_token()?;
                     assert_eq!(":", reader.next_token()?.unwrap());
                     for _ in 0..res.grid.num_layer {
-                        res.horizontal_capacity.push(crate::util::parse(reader.next_token()?.unwrap()));
+                        res.horizontal_capacity
+                            .push(crate::util::parse(reader.next_token()?.unwrap()));
                     }
                 }
                 b"MINWIREWIDTH" => {
                     reader.next_token()?;
                     assert_eq!(":", reader.next_token()?.unwrap());
                     for _ in 0..res.grid.num_layer {
-                        res.min_wire_width.push(crate::util::parse(reader.next_token()?.unwrap()));
+                        res.min_wire_width
+                            .push(crate::util::parse(reader.next_token()?.unwrap()));
                     }
                 }
                 b"MINWIRESPACING" => {
                     reader.next_token()?;
                     assert_eq!(":", reader.next_token()?.unwrap());
                     for _ in 0..res.grid.num_layer {
-                        res.min_wire_spacing.push(crate::util::parse(reader.next_token()?.unwrap()));
+                        res.min_wire_spacing
+                            .push(crate::util::parse(reader.next_token()?.unwrap()));
                     }
                 }
                 b"VIASPACING" => {
                     reader.next_token()?;
                     assert_eq!(":", reader.next_token()?.unwrap());
                     for _ in 0..res.grid.num_layer {
-                        res.via_spacing.push(crate::util::parse(reader.next_token()?.unwrap()));
+                        res.via_spacing
+                            .push(crate::util::parse(reader.next_token()?.unwrap()));
                     }
                 }
                 b"GRIDORIGIN" => {

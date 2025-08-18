@@ -27,7 +27,7 @@ impl Point {
 #[derive(Debug, Default)]
 pub struct Rect {
     pub ll: Point,
-    pub ur: Point
+    pub ur: Point,
 }
 
 impl Rect {
@@ -35,9 +35,6 @@ impl Rect {
         let ll = Point::read(reader).await?;
         let mut ur = Point::read(reader).await?;
         ur += ll;
-        Ok(Self {
-            ll,
-            ur
-        })
+        Ok(Self { ll, ur })
     }
 }

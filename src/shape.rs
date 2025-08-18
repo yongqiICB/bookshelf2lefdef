@@ -14,7 +14,7 @@ impl Shape {
         let shape = Rect::read_by_lowerleft_width_height(reader).await?;
         Ok(Self {
             shape_name: name,
-            rect: shape
+            rect: shape,
         })
     }
 }
@@ -38,11 +38,9 @@ impl NodeShape {
     }
 }
 
-
-
 #[derive(Default)]
 pub struct Shapes {
-    shapes: Vec<NodeShape>
+    shapes: Vec<NodeShape>,
 }
 
 impl Shapes {
@@ -63,7 +61,5 @@ impl Shapes {
             }
         }
         Ok(res)
-
     }
 }
-

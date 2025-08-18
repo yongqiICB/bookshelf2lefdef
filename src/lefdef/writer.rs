@@ -2,8 +2,7 @@ use std::collections::BTreeMap;
 
 use log::{info, warn};
 
-use crate::{geom::Point, parser::Bookshelf};
-
+use crate::{geom::Point, lefdef::net::Node, parser::Bookshelf};
 
 /// Pin has no size in ISPD 11.
 /// We give it a minimum size to make it useful.
@@ -11,8 +10,8 @@ use crate::{geom::Point, parser::Bookshelf};
 pub struct Pin {
     pub name: String,
     pub offset: Point,
+    pub direction: String,
 }
-
 
 #[derive(Debug, Default)]
 pub struct Macro {
@@ -30,21 +29,15 @@ impl Macro {
             \n  SIZE {} {} ;\
             \n  SYMMETRY X Y ;\
             \n  SITE coresite ;",
-            self.name,
-            self.size.x,
-            self.size.y,
+            self.name, self.size.x, self.size.y,
         );
         let center = Point {
             x: self.size.x / 2.0,
             y: self.size.y / 2.0,
         };
         for (pin_cnt, pin) in self.pins.iter().enumerate() {
-            let direction = match pin.name.as_str() {
-                "I" => "INPUT",
-                "O" => "OUTPUT",
-                _ => panic!("Unable to translate direction"),
-            };
-            res += &format!("\
+            res += &format!(
+                "\
                 \n  PIN {}_{}\
                 \n      DIRECTION {} ;\
                 \n      USE SIGNAL ; \
@@ -53,10 +46,15 @@ impl Macro {
                 \n              RECT {} {} {} {} ;\
                 \n      END\
                 \n  END {}_{}",
-                pin.name, pin_cnt,
-                direction,
-                pin.offset.x + center.x - 0.5, pin.offset.y + center.y - 0.5, pin.offset.x + center.x + 0.5, pin.offset.y + center.y + 0.5,
-                pin.name, pin_cnt
+                pin.name,
+                pin_cnt,
+                pin.direction,
+                pin.offset.x + center.x - 0.5,
+                pin.offset.y + center.y - 0.5,
+                pin.offset.x + center.x + 0.5,
+                pin.offset.y + center.y + 0.5,
+                pin.name,
+                pin_cnt
             );
         }
         res += &format!("\n END {}", self.name);
@@ -64,12 +62,15 @@ impl Macro {
     }
 }
 #[derive(Debug, Default)]
-pub struct Macros(pub BTreeMap<String, Macro>);
+pub struct Macros {
+    pub macros: BTreeMap<String, Macro>,
+    pub net_to_nodes: BTreeMap<String, Vec<Node>>, // aux net name to pins
+}
 
 impl Macros {
     pub fn write_all(&self) -> String {
         let mut res = String::new();
-        for r#macro in self.0.values() {
+        for r#macro in self.macros.values() {
             res += &r#macro.format_to_lef();
         }
         res
@@ -86,27 +87,39 @@ impl Macros {
             \n  * PORT SHAPE are 1x1 as we do not check up `bookshelf.masterpin`, i am tired of writing this code.\
             \n  * PORT DIRECTION is specified according to `bookshelf.net` file."
         );
-
         let mut res = Self::default();
         info!("Building macros...");
-        bookshelf.nodes.nodes.iter().for_each(|node| {
-            res.0.entry(node.name.clone()).or_insert(Macro { 
-                name: node.name.clone(), 
-                size: node.size.clone(), 
-                pins: vec![] 
+        bookshelf.nodes.nodes.iter().for_each(|(_, node)| {
+            res.macros.entry(node.name.clone()).or_insert(Macro {
+                name: node.name.clone(),
+                size: node.size,
+                pins: vec![],
             });
         });
         bookshelf.nets.iter().for_each(|net| {
             net.pin.iter().for_each(|pin| {
-                res.0.entry(pin.instance_name.clone()).and_modify(|r#macro| {
-                    r#macro.pins.push(Pin { 
-                        name: pin.pin_name.clone(), 
-                        offset:  pin.offset.clone()
-                    });
+                let r#macro = res.macros.get_mut(&pin.instance_name).unwrap();
+                let pin_id = r#macro.pins.len();
+                let pin_name = format!("{}_{}", pin.pin_name, pin_id);
+                r#macro.pins.push(Pin {
+                    name: pin_name.clone(),
+                    offset: pin.offset,
+                    direction: match pin.pin_name.as_str() {
+                        "I" => "INPUT".to_string(),
+                        "O" => "OUTPUT".to_string(),
+                        _ => panic!("Unable to translate direction"),
+                    },
                 });
+                let nodes_in_net = res.net_to_nodes.entry(net.name.clone()).or_insert(vec![]);
+
+                if bookshelf.nodes.is_terminal_ni(&pin.instance_name) {
+                    nodes_in_net.push(Node::Pin(pin.instance_name.clone()));
+                } else {
+                    nodes_in_net.push(Node::InstancePin(pin.instance_name.clone(), pin_name));
+                }
             });
         });
-        info!("Finished building macros");        
+        info!("Finished building macros");
         Ok(res)
     }
 }
@@ -115,7 +128,6 @@ impl Macros {
 enum LayerType {
     #[default]
     Routing,
-    Cut,
 }
 
 #[derive(Default)]
@@ -137,7 +149,6 @@ impl std::fmt::Display for Direction {
 #[derive(Default)]
 pub struct RoutingLayer {
     name: String,
-    layer_type: LayerType,
     direction: Direction,
     pitch: f64,
     offset: f64,
@@ -145,19 +156,19 @@ pub struct RoutingLayer {
     spacing: f64,
 }
 
-
 #[derive(Default)]
 pub struct CutLayer;
 impl CutLayer {
     pub fn format_a_default_one(name: String) -> String {
         let mut res = String::new();
-        res += &format!("\n\
+        res += &format!(
+            "\n\
             \nLAYER {}\
             \n  TYPE CUT ;\
             \n  SPACING 0.05 ;\
             \n  WIDTH 0.05 ;\
             \nEND {}",
-            name, name    
+            name, name
         );
         res
     }
@@ -168,11 +179,10 @@ pub struct OverlapLayer;
 impl OverlapLayer {
     pub fn format_a_default_one() -> String {
         let mut res = String::new();
-        res += &format!("\n\
+        res += "\n\
             \nLAYER OVERLAP\
             \n  TYPE OVERLAP ;\
-            \n END OVERLAP"
-        );
+            \n END OVERLAP";
         res
     }
 }
@@ -183,13 +193,13 @@ impl RoutingLayer {
         let aux_layer = &bookshelf.route;
         let num_layer = aux_layer.vertical_capacity.len();
         for layer_id in 0..num_layer {
-            let layer_name = format!("metal{}", layer_id+1);
+            let layer_name = format!("metal{}", layer_id + 1);
             let vertical_cap = bookshelf.route.vertical_capacity[layer_id];
             let horizontal_cap = bookshelf.route.horizontal_capacity[layer_id];
             let direction = match (vertical_cap > 0, horizontal_cap > 0) {
                 (false, false) => Direction::Horizontal, // M1, usually horizontal.
-                (false, true) => Direction::Horizontal, // horizontal
-                (true, false) => Direction::Vertical, // vertical
+                (false, true) => Direction::Horizontal,  // horizontal
+                (true, false) => Direction::Vertical,    // vertical
                 (true, true) => {
                     panic!("I don't know how to parse a bidirectional lef");
                 }
@@ -197,7 +207,8 @@ impl RoutingLayer {
             let min_wire_width = bookshelf.route.min_wire_width[layer_id];
             let min_wire_spacing = bookshelf.route.min_wire_spacing[layer_id];
             let pitch = min_wire_width + min_wire_spacing;
-            { // LEFDEF does not support partial routing blockage.
+            {
+                // LEFDEF does not support partial routing blockage.
                 let cap_restriction = vertical_cap.max(horizontal_cap);
                 let tile_len = match direction {
                     Direction::Horizontal => bookshelf.route.tile_size.y,
@@ -217,8 +228,7 @@ impl RoutingLayer {
             res.push(Self {
                 name: layer_name,
                 offset: pitch as f64 / 2.0,
-                layer_type: LayerType::Routing,
-                direction: direction,
+                direction,
                 pitch: pitch as f64,
                 width: min_wire_width as f64,
                 spacing: min_wire_spacing as f64,
@@ -237,13 +247,7 @@ impl RoutingLayer {
             \n  PITCH {} ;\
             \n  OFFSET {} ;\
             \nEND {}",
-            self.name,
-            self.direction,
-            self.width,
-            self.spacing,
-            self.pitch,
-            self.offset,
-            self.name,
+            self.name, self.direction, self.width, self.spacing, self.pitch, self.offset, self.name,
         );
         res
     }
