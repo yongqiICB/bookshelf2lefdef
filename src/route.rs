@@ -4,9 +4,9 @@ use crate::{geom::Point, io::reader::CommonReader, util};
 
 #[derive(Default)]
 pub struct Grid {
-    num_x: i64,
-    num_y: i64,
-    num_layer: i64,
+    pub num_x: i64,
+    pub num_y: i64,
+    pub num_layer: i64,
 }
 
 impl Grid {

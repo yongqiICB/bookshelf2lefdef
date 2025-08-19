@@ -35,26 +35,24 @@ impl Macro {
             x: self.size.x / 2.0,
             y: self.size.y / 2.0,
         };
-        for (pin_cnt, pin) in self.pins.iter().enumerate() {
+        for pin in self.pins.iter() {
             res += &format!(
                 "\
-                \n  PIN {}_{}\
+                \n  PIN {}\
                 \n      DIRECTION {} ;\
                 \n      USE SIGNAL ; \
                 \n      PORT\
                 \n          LAYER metal1 ; \
                 \n              RECT {} {} {} {} ;\
                 \n      END\
-                \n  END {}_{}",
+                \n  END {}",
                 pin.name,
-                pin_cnt,
                 pin.direction,
                 pin.offset.x + center.x - 0.5,
                 pin.offset.y + center.y - 0.5,
                 pin.offset.x + center.x + 0.5,
                 pin.offset.y + center.y + 0.5,
                 pin.name,
-                pin_cnt
             );
         }
         res += &format!("\n END {}", self.name);

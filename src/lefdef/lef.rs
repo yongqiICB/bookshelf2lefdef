@@ -14,7 +14,17 @@ impl Lef {
     }
 
     pub async fn write(&self, file_path: &PathBuf) -> anyhow::Result<()> {
-        let to_write = self.macros.write_all();
+        let mut to_write = format!(
+r#"VERSION 5.8 ;
+BUSBITCHARS "[]" ;
+DIVIDERCHAR "/" ;
+
+SITE CoreSite 
+    CLASS CORE ;
+    SYMMETRY Y ;
+    SIZE 1.000 1.000 ;
+"#);
+        to_write += &self.macros.write_all();
         let mut f = std::fs::File::create(file_path)?;
         f.write_all(to_write.as_bytes())?;
         Ok(())
