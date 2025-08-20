@@ -22,7 +22,8 @@ DIVIDERCHAR "/" ;
 SITE CoreSite 
     CLASS CORE ;
     SYMMETRY Y ;
-    SIZE 1.000 1.000 ;
+    SIZE 1.000 BY 9.000 ;
+END CoreSite
 "#);
         to_write += &self.macros.write_all();
         let mut f = std::fs::File::create(file_path)?;

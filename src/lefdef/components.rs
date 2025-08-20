@@ -15,21 +15,23 @@ impl Components {
                 crate::nodes::Movable::Fixed => "FIXED",
                 crate::nodes::Movable::FixedButOverlapAllowed => continue,
             };
+            let place = &bookshelf.pls.get(&node.name).unwrap().place.clone();
             num_comp += 1;
             res += &format!("\n- {} {} + {} ( {} {} ) N ;",
                 node.name,
                 node.name,
                 moveable,
-                (node.size.x as i64) * 1000,
-                (node.size.y as i64) * 1000,
+                (place.x as i64) * 1000,
+                (place.y as i64) * 1000,
             );
         }
         Self{to_print:res, num: num_comp}
     }
 
     pub fn write(&self) -> String {
-        let mut res = format!("\nCOMPONENTS {}", self.num);
+        let mut res = format!("\nCOMPONENTS {} ;", self.num);
         res += &self.to_print;
+        res += &format!("\nEND COMPONENTS");
         res        
     }
 }

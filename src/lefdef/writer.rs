@@ -26,9 +26,9 @@ impl Macro {
             "\nMACRO {}\
             \n  CLASS CORE ;\
             \n  ORIGIN 0 0 ;\
-            \n  SIZE {} {} ;\
+            \n  SIZE {} BY {} ;\
             \n  SYMMETRY X Y ;\
-            \n  SITE coresite ;",
+            \n  SITE CoreSite ;",
             self.name, self.size.x, self.size.y,
         );
         let center = Point {

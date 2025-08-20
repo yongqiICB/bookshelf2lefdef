@@ -51,6 +51,7 @@ impl Nets {
             }
             res += " + USE SIGNAL ;";
         }
+        res += &format!("\nEND NETS");
         res
     }
 }

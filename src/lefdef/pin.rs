@@ -39,20 +39,22 @@ impl DefPin {
                 )
             }
             _ => {
-                format!(
-                    "\
-                \n - {}\
-                \n + USE SIGNAL\
-                \n + PORT\
-                \n   + LAYER {} ( 0 0 ) ( {} {} )\
-                \n   + FIXED ( {} {} ) N ;",
-                    self.name,
-                    self.layer,
-                    (self.shape.x * 1000.0) as i64,
-                    (self.shape.y * 1000.0) as i64,
-                    (self.place.x * 1000.0) as i64,
-                    (self.place.y * 1000.0) as i64
-                )
+                format!("")
+                // TODO!
+                // format!(
+                //     "\
+                // \n- {}\
+                // \n    + USE SIGNAL\
+                // \n    + PORT\
+                // \n        + LAYER {} ( 0 0 ) ( {} {} )\
+                // \n        + FIXED ( {} {} ) N ;",
+                //     self.name,
+                //     self.layer,
+                //     (self.shape.x * 1000.0) as i64,
+                //     (self.shape.y * 1000.0) as i64,
+                //     (self.place.x * 1000.0) as i64,
+                //     (self.place.y * 1000.0) as i64
+                //)
             }
         }
     }
@@ -133,7 +135,7 @@ impl DefPins {
     }
 
     pub fn write(&self) -> String {
-        let mut res = format!("\nPINS {}", self.0.len());
+        let mut res = format!("\nPINS {} ;", self.0.len());
         for def_pin in self.0.values() {
             res += &def_pin.write_to_string();
         }

@@ -7,3 +7,4 @@ pub mod writer;
 pub mod row;
 pub mod components;
 pub mod tracks;
+pub mod die_area;

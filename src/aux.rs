@@ -40,7 +40,7 @@ impl fmt::Display for Aux {
     }
 }
 impl Aux {
-    pub async fn build(aux_path: PathBuf) -> anyhow::Result<Self> {
+    pub async fn build(aux_path: &PathBuf) -> anyhow::Result<Self> {
         let mut res = Aux::default();
         res.me = Some(aux_path.clone());
         let mut reader = TokenReader::new_from_path(&aux_path);

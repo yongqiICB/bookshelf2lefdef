@@ -1,5 +1,5 @@
 use crate::{geom::Point, io::reader::TokenReader};
-use std::{fs::File, io::BufReader, path::PathBuf};
+use std::{collections::BTreeMap, fs::File, io::BufReader, path::PathBuf};
 
 pub struct Pl {
     pub name: String,
@@ -45,15 +45,19 @@ impl Pl {
 
 #[derive(Default)]
 pub struct Pls {
-    pls: Vec<Pl>,
+    pls: BTreeMap<String, Pl>,
 }
 
 impl Pls {
-    pub fn iter(&self) -> std::slice::Iter<'_, Pl> {
-        self.pls.iter()
+    pub fn iter(&self) -> std::collections::btree_map::Values<'_, String, Pl> {
+        self.pls.values()
     }
     pub fn len(&self) -> usize {
         self.pls.len()
+    }
+
+    pub  fn get(&self, name: &str) -> Option<&Pl> {
+        self.pls.get(name)
     }
     pub async fn read_from_file(file_path: &PathBuf) -> anyhow::Result<Self> {
         let mut res = Self::default();
@@ -64,8 +68,8 @@ impl Pls {
                     reader.swallow_line()?;
                 }
                 _ => {
-                    let net = Pl::read(&mut reader).await?;
-                    res.pls.push(net);
+                    let place = Pl::read(&mut reader).await?;
+                    res.pls.insert(place.name.clone(), place);
                 }
             }
         }
