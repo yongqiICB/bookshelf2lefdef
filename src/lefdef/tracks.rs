@@ -84,7 +84,7 @@ impl Tracks {
         info!("DIEAREA: {:?}", die_area);
         info!("COREAREA: {:?}", core_area);
         for layer_id in 0..layer_count {
-            let pitch = bookshelf.route.min_wire_spacing[layer_id] + bookshelf.route.min_wire_width[layer_id] * 1000;
+            let pitch = bookshelf.route.min_wire_spacing[layer_id] * 1000 + bookshelf.route.min_wire_width[layer_id] * 1000;
             { // HANDLE X
                 let start = (die_area.ll.x as i64 * 1000) + pitch / 2;
                 let num_tracks = (die_area.ur.x as i64 * 1000 - start) / pitch;
